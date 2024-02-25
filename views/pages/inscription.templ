@@ -1,0 +1,30 @@
+package pages 
+
+import "github.com/keen-c/modular/user"
+
+type ErrorsInscription struct {
+	Email    string
+	Password string
+}
+
+
+templ Inscription(errors user.ErrorsInscription, userInput user.UserCreate) {
+	<!DOCTYPE html>
+	<html lang="fr">
+		<head></head>
+		<body>
+			<form method="post" action="/create">
+				<input type="email" name="email" placeholder="email" value={ userInput.Email }/>
+				if len(errors.Email) > 0 {
+					<span>{ errors.Password }</span>
+				}
+				<input type="password" name="password" placeholder="mot de passe" value={ userInput.Password }/>
+				if len(errors.Password) > 0 {
+					<span>{ errors.Password }</span>
+				}
+				<input type="password" name="repeat-password" placeholder="repetez mot de passe "/>
+				<input type="submit" value="s'inscrire"/>
+			</form>
+		</body>
+	</html>
+}

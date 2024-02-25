@@ -6,28 +6,38 @@ import (
 	"net/mail"
 	"strings"
 	"unicode"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
+type UserCreate struct {
+	Email    string
+	Password string
+}
 type User struct {
-	id       string
-	email    string
-	password string
+	ID    string
+	Email string
 }
 
-func (u *User) Validate(password string) map[string]string {
-	m := make(map[string]string)
-	if _, err := mail.ParseAddress(u.email); err != nil {
-		m["email"] = "Address email invalid"
+type ErrorsInscription struct {
+	Email    string
+	Password string
+}
+
+func (u *UserCreate) Validate(password string) *ErrorsInscription {
+	m := ErrorsInscription{}
+	if _, err := mail.ParseAddress(u.Email); err != nil {
+		m.Email = "Address email invalid"
 	}
-	if u.password != password {
-		m["password"] = "password do not match"
+	if u.Password != password {
+		m.Password = "password do not match"
 	}
-	if len(m) > 0 {
-		return m
+	if m != (ErrorsInscription{}) {
+		return &m
 	}
 	return nil
 }
-func (u *User) ValidatePassword(password string) error {
+func (u *UserCreate) ValidatePassword(password string) error {
 	var specialRunes = "!@#$%^&*"
 	m := map[string]bool{
 		"special":   false,
@@ -38,7 +48,7 @@ func (u *User) ValidatePassword(password string) error {
 	if len(password) < 8 {
 		return errors.New("minimum 8 characters requis")
 	}
-	for _, r := range password{
+	for _, r := range password {
 		switch {
 		case unicode.IsPunct(r) || unicode.IsSymbol(r) || strings.ContainsRune(specialRunes, r):
 			m["special"] = true
@@ -50,7 +60,7 @@ func (u *User) ValidatePassword(password string) error {
 			m["numbers"] = true
 		}
 	}
-	for i := 0 ; i < len(m); i++ {
+	for i := 0; i < len(m); i++ {
 		switch {
 		case !m["special"]:
 			return fmt.Errorf("minimum un special character : (%s)", specialRunes)
@@ -63,5 +73,13 @@ func (u *User) ValidatePassword(password string) error {
 		}
 
 	}
+	return nil
+}
+func (u *UserCreate) HashPassword() error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	u.Password = string(hashedPassword)
 	return nil
 }

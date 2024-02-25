@@ -3,23 +3,19 @@ package user
 import (
 	"context"
 	"database/sql"
-
-	"github.com/keen-c/modular/shared/database"
 )
 
 type UserStorer struct {
 	DB *sql.DB
 }
-func NewUserStorer(fn database.ConnectDB) *UserStorer {
-	db , err := fn.InitDB()
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
+
+func NewUserStorer(db *sql.DB) *UserStorer {
 	return &UserStorer{DB: db}
 }
+
+// Insert user into database and return id
 func (us UserStorer) Create(ctx context.Context, email, password string) (string, error) {
-	query := `insert into users (email, password) values ($1, $2) returing id`
+	query := `insert into users (email,password) values ($1, $2) returning id`
 	var id string
 	if err := us.DB.QueryRowContext(ctx, query, email, password).Scan(&id); err != nil {
 		return "", err
@@ -27,7 +23,7 @@ func (us UserStorer) Create(ctx context.Context, email, password string) (string
 	return id, nil
 }
 func (us UserStorer) Update() error {
-	return nil 
+	return nil
 }
 func (us UserStorer) Delete(ctx context.Context, email string) error {
 	query := `delete from users where email = $1`
@@ -43,4 +39,14 @@ func (us UserStorer) Connect(ctx context.Context, email, password string) error 
 		return err
 	}
 	return nil
+}
+func (us UserStorer) ExistsEmail(ctx context.Context, email string) (bool, error) {
+	var exists bool
+	query := `select exists(select email from users where email = $1)`
+	err := us.DB.QueryRowContext(ctx, query, email).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+
 }

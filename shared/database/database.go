@@ -16,10 +16,6 @@ type Database struct {
 	Password string
 }
 
-type ConnectDB interface {
-	InitDB() (*sql.DB, error)
-}
-
 func (d *Database) String() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s", d.User, d.Password, d.Host, d.Port, d.Name)
 }
@@ -43,5 +39,6 @@ func InitDB() (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return db, nil
 }
